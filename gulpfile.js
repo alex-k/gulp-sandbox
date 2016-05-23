@@ -10,37 +10,36 @@ var header = require('gulp-header');
 var filter = require('gulp-filter');
 var rev = require('gulp-rev');
 var revReplace = require('gulp-rev-replace');
+var useref = require('gulp-useref');
+var rimraf = require('rimraf');
+var runSequence = require('run-sequence');
 
-gulp.task('styles', function () {
-    var cssFilter = filter("**/*.css", { restore: true });
-    var indexHtmlFilter = filter(['**/*', '!**/index.html'], { restore: true });
 
-    return gulp.src('app/**/*')
-        //.pipe(concat('combined.css'))
-        //.pipe(rename('combined.min.css'))
-        .pipe(cssFilter)
-        .pipe(gulp.dest('dist'))
-        .pipe(rev())
-        .pipe(minifycss())
-        .pipe(gulp.dest('dist'))
-        .pipe(rev.manifest())
-        .pipe(gulp.dest('dist'))
-        .pipe(cssFilter.restore)
-        .pipe(revReplace())
-        .pipe(gulp.dest('dist'))
-        ;
+var conf = {
+    app: 'app',
+    dist: 'dist',
+    dist_nginx: 'dist/nginx',
+};
+
+gulp.task('clean:tmp', function (cb) {
+    rimraf('./.tmp', cb);
 });
 
-gulp.task("index", function() {
-    //var jsFilter = filter("**/*.js", { restore: true });
-    var cssFilter = filter("**/*.css", { restore: true });
-    var indexHtmlFilter = filter(['**/*', '!**/index.html'], { restore: true });
+gulp.task('clean:dist', function (cb) {
+    rimraf(conf.dist, cb);
+})
 
-    return gulp.src("app/**/*")
-        // .pipe(useref())      // Concatenate with gulp-useref
+
+gulp.task("build:nginx", function () {
+    //var jsFilter = filter("**/*.js", { restore: true });
+    var cssFilter = filter("**/*.css", {restore: true});
+
+    return gulp.src(conf.app + "/**/*")
+        //.pipe(useref({searchPath: ['app', '.tmp']}))      // Concatenate with gulp-useref
         // .pipe(jsFilter)
         // .pipe(uglify())             // Minify any javascript sources
         // .pipe(jsFilter.restore)
+        //.pipe(concat('combined.css'))
         .pipe(cssFilter)
         .pipe(minifycss())               // Minify any CSS sources
         .pipe(rev())                // Rename the concatenated files (but not index.html)
@@ -48,12 +47,10 @@ gulp.task("index", function() {
         .pipe(revReplace({
             replaceInExtensions: ['.js', '.css', '.html', '.php']
         }))
-        .pipe(gulp.dest('dist'));
+        .pipe(gulp.dest(conf.dist_nginx));
 });
 
 
-gulp.task('default', ['index'], function () {
-//    gulp.src('app/**/*')
-//        .pipe(gulp.dest('dist'));
-
+gulp.task('default', ['clean:dist'], function () {
+    runSequence(['build:nginx']);
 });
