@@ -14,6 +14,11 @@ var useref = require('gulp-useref');
 var rimraf = require('rimraf');
 var runSequence = require('run-sequence');
 
+var s3 = require('gulp-s3-upload')({
+    accessKeyId: "AKIAJ6KNQ3U4WHPDCQVQ",
+    secretAccessKey: "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"
+});
+
 
 var conf = {
     app: 'app',
@@ -33,17 +38,15 @@ gulp.task('clean:dist', function (cb) {
 gulp.task("useref", function () {
     return gulp.src(conf.app + "/index.html")
         .pipe(useref({searchPath: ['app', '.tmp']}))      // Concatenate with gulp-useref
-        //.pipe(gulp.dest('useref'));
-    ;
+        ;
 });
 
 gulp.task("build:nginx", function () {
-    var jsFilter = filter("**/*.js", { restore: true });
+    var jsFilter = filter("**/*.js", {restore: true});
     var cssFilter = filter("**/*.css", {restore: true});
 
     return gulp.src(conf.app + "/**/*")
         .pipe(useref({searchPath: ['app', '.tmp']}))      // Concatenate with gulp-useref
-        //.pipe(concat('combined.css'))
         .pipe(jsFilter)
         .pipe(uglify())             // Minify any javascript sources
         .pipe(rev())                // Rename the concatenated files (but not index.html)
@@ -59,6 +62,18 @@ gulp.task("build:nginx", function () {
 });
 
 
-gulp.task('default', ['clean:tmp','clean:dist'], function () {
-    runSequence(['useref','build:nginx']);
+gulp.task("upload", function () {
+    gulp.src(conf.dist_nginx + "/assets/**")
+        .pipe(s3({
+            Bucket: 'bonusway-dev', //  Required
+            ACL: 'public-read'       //  Needs to be user-defined
+        }, {
+            // S3 Construcor Options, ie:
+            maxRetries: 5
+        }))
+    ;
+});
+
+gulp.task('default', ['clean:tmp', 'clean:dist'], function () {
+    runSequence(['useref', 'build:nginx']);
 });
