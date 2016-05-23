@@ -30,16 +30,24 @@ gulp.task('clean:dist', function (cb) {
 })
 
 
+gulp.task("useref", function () {
+    return gulp.src(conf.app + "/index.html")
+        .pipe(useref({searchPath: ['app', '.tmp']}))      // Concatenate with gulp-useref
+        //.pipe(gulp.dest('useref'));
+    ;
+});
+
 gulp.task("build:nginx", function () {
-    //var jsFilter = filter("**/*.js", { restore: true });
+    var jsFilter = filter("**/*.js", { restore: true });
     var cssFilter = filter("**/*.css", {restore: true});
 
     return gulp.src(conf.app + "/**/*")
-        //.pipe(useref({searchPath: ['app', '.tmp']}))      // Concatenate with gulp-useref
-        // .pipe(jsFilter)
-        // .pipe(uglify())             // Minify any javascript sources
-        // .pipe(jsFilter.restore)
+        .pipe(useref({searchPath: ['app', '.tmp']}))      // Concatenate with gulp-useref
         //.pipe(concat('combined.css'))
+        .pipe(jsFilter)
+        .pipe(uglify())             // Minify any javascript sources
+        .pipe(rev())                // Rename the concatenated files (but not index.html)
+        .pipe(jsFilter.restore)
         .pipe(cssFilter)
         .pipe(minifycss())               // Minify any CSS sources
         .pipe(rev())                // Rename the concatenated files (but not index.html)
@@ -51,6 +59,6 @@ gulp.task("build:nginx", function () {
 });
 
 
-gulp.task('default', ['clean:dist'], function () {
-    runSequence(['build:nginx']);
+gulp.task('default', ['clean:tmp','clean:dist'], function () {
+    runSequence(['useref','build:nginx']);
 });

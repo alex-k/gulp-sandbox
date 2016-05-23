@@ -13,5 +13,13 @@
 <?php
     phpinfo();
 ?>
+
+
+<!-- build:js assets/scripts/main.js -->
+<script src="assets/scripts/script2.js"></script>
+<script src="assets/scripts/script1.js"></script>
+<!-- endbuild -->
+
+
 </body>
 </html>
