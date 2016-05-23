@@ -43,11 +43,11 @@ gulp.task("index", function() {
         // .pipe(jsFilter.restore)
         .pipe(cssFilter)
         .pipe(minifycss())               // Minify any CSS sources
-        .pipe(cssFilter.restore)
-        .pipe(indexHtmlFilter)
         .pipe(rev())                // Rename the concatenated files (but not index.html)
-        .pipe(indexHtmlFilter.restore)
-        .pipe(revReplace())         // Substitute in new filenames
+        .pipe(cssFilter.restore)
+        .pipe(revReplace({
+            replaceInExtensions: ['.js', '.css', '.html', '.php']
+        }))
         .pipe(gulp.dest('dist'));
 });
 
